@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cd inst/java_src
+"${R_HOME}/bin/Rscript" ../../exec/ant.R --installer
+
+cd ../..
+cp inst/cleanup/cleanup.win .
+cp inst/cleanup/cleanup.R .
+

@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<project name="ant-r" default="all" basedir=".">
+
+	<!--{{{ Properties -->
+  <property name="compiler.debug"         value="on" />
+  <property name="compiler.debuglevel"    value="lines,vars,source" />
+  <property name="compiler.optimize"      value="off" />
+  <property name="compiler.deprecation"   value="off" />
+  <property name="compiler.verbose"       value="off" />
+  <property name="compiler.nowarn"        value="off" />
+  <property name="compiler.target"        value="1.5" />
+  <property name="compiler.source"        value="1.5" />
+  
+  <property name="install.dir" value=".." />
+  <property name="javadoc.dir" value="${install.dir}/javadoc" />
+  <!--}}}-->
+    
+	<!--{{{ clean -->
+	<target name="clean">
+		<delete dir="build" />
+		<delete dir="${javadoc.dir}" />
+	</target>
+	<!-- }}} -->
+	
+	<!--{{{ compile -->
+	
+	<path id="project.classpath">
+		<pathelement location="lib/REngine.jar" />
+		<pathelement location="lib/JRIEngine.jar" />
+		<pathelement location="${install.dir}/apache-ant/lib/ant.jar" />
+	</path>
+	
+	<target name="compile">
+		<mkdir dir="build" />
+		<javac srcdir="src" 
+			destdir="build"  
+			includeJavaRuntime="yes"
+			debug="${compiler.debug}"
+      debuglevel="${compiler.debuglevel}"
+      optimize="${compiler.optimize}"
+      deprecation="${compiler.deprecation}"
+      verbose="${compiler.verbose}"
+      nowarn="${compiler.nowarn}"
+      target="${compiler.target}"
+      source="${compiler.source}" >
+			<classpath refid="project.classpath" />
+		</javac>	
+	</target>
+
+	<target name="build" depends="compile">
+		<unjar src="lib/REngine.jar" dest="build" />
+		<unjar src="lib/JRIEngine.jar" dest="build" />
+		<jar jarfile="${install.dir}/apache-ant/lib/ant-r.jar">
+			<fileset dir="build" />
+		</jar>
+	</target>
+	
+	<!-- this target must be called to alter the defaults.properties 
+	     file in the ant.jar library whenever a new R specific task is added
+	     the task also should be added in the <echo> call below -->
+	<target name="masquerade" >
+		 <mkdir dir="mask" />
+		 <unjar src="${install.dir}/apache-ant/lib/ant.jar" dest="mask" />
+		 <copy file="defaults.properties" tofile="mask/org/apache/tools/ant/taskdefs/defaults.properties" />
+		 <echo 
+		 	file="mask/org/apache/tools/ant/taskdefs/defaults.properties"
+		 	append="true">
+
+# R specific tasks
+r-run=org.rproject.ant.RRun
+r-set=org.rproject.ant.RSet
+		 	</echo>
+		 	<jar jarfile="${install.dir}/apache-ant/lib/ant.jar">
+				<fileset dir="mask">
+					<include name="**"/>
+				</fileset>
+			</jar>
+		 
+		 <delete dir="mask" />
+	</target>
+	
+	<property name="rdoc" value="../html/00Index.html" />  
+	
+	<target name="javadoc"
+		description="Compile the Javadoc API documentation">
+		
+		<mkdir dir="${javadoc.dir}" />
+
+<echo file="${javadoc.dir}/package-list">
+org.rproject.ant
+</echo>
+		
+		<javadoc destdir="${javadoc.dir}" author="true" 
+			version="true" use="true" private="true"
+			windowtitle="Ant R package javadoc"
+			classpathref="project.classpath">
+
+		    <fileset dir="src">	
+		    	<include name="**"/>
+		    </fileset>
+		    
+		    <doctitle><![CDATA[<h1>Ant R tasks javadoc</h1>]]></doctitle>
+		    <bottom>
+		    <![CDATA[<i>Copyright &#169; 2009, Romain Francois <a href="mailto://francoisromain@free.fr">francoisromain@free.fr</a></i>]]></bottom>
+		    <!--<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>-->
+		    <link href="http://www.rforge.net/org/docs/" />
+		    <link href="."/>
+		</javadoc>
+	</target>
+	
+	<target name="all" depends="clean,build,javadoc">
+		<delete dir="build" />
+	</target>
+
+</project>
